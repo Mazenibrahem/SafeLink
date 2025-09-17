@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>SafeLink Checker</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg1: #617780;
+      --bg2: #04094d;
+      --bg3: #617780;
+      --card: #161b22;
+      --border: #2b3138;
+      --accent: #2ea043;
+      --accent-hover: #3fb950;
+      --safe: #2ecc71;
+      --susp: #f39c12;
+      --danger: #e74c3c;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box;font-family:Inter,system-ui,Roboto,Arial,sans-serif}
+    html,body{
+      height:100%;margin:0;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      background-size:300% 300%;
+      animation:bgMove 15s ease infinite;
+      color:#c9d1d9;
+    }
+    @keyframes bgMove {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    .container{max-width:880px;margin:40px auto;padding:20px;animation:fadeUp 1s ease}
+    @keyframes fadeUp {
+      from{opacity:0;transform:translateY(20px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    header{text-align:center;margin-bottom:18px}
+    h1{margin:0;font-size:28px;font-weight:700;color:#f0f6fc;letter-spacing:1px}
+    p.lead{margin:6px 0 0;color:#8b949e;font-size:15px}
+    .card{
+      background:var(--card);
+      padding:22px;border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,0.5);
+      transition:transform .3s ease, box-shadow .3s ease;
+    }
+    .card:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(0,0,0,0.6)}
+    label{display:block;margin-bottom:8px;font-weight:600;font-size:15px}
+    input[type=text]{
+      width:100%;padding:12px 14px;border-radius:8px;
+      border:1px solid var(--border);
+      background:#0d1117;color:#f0f6fc;font-size:15px;
+      transition:border .3s ease, box-shadow .3s ease;
+    }
+    input[type=text]:focus{
+      outline:none;border-color:var(--accent-hover);
+      box-shadow:0 0 0 3px rgba(46,160,67,0.15);
+    }
+    .row{display:flex;gap:12px;margin-top:14px}
+	button{ border:none;border-radius:8px;
+	padding:10px 18px;
+	font-weight:600;
+	font-size:15px;
+	cursor:pointer;
+	 transition:transform .2s ease, box-shadow .3s ease;
+	 }
+	 button:hover{transform:translateY(-2px);
+	box-shadow:0 6px 14px rgba(0,0,0,0.4)}
+	.primary{background:linear-gradient(90deg,var(--accent),var(--accent-hover));
+	color:#fff}
+	.primary:disabled{opacity:0.5;cursor:not-allowed} 
+	.secondary{background:transparent;
+	border:1px solid var(--border);
+	color:#c9d1d9} .secondary:hover{background:rgba(255,255,255,0.03)} 
+	.result{ margin-top:20px;padding:18px;
+	border-radius:10px;
+	background:#1c2128;
+	border:1px solid var(--border);
+	animation:fadeUp .8s ease; }
+
+    .verdict{
+      display:inline-block;padding:8px 14px;
+      border-radius:999px;font-weight:600;font-size:14px;
+      animation:pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%{transform:scale(1)}
+      50%{transform:scale(1.05)}
+      100%{transform:scale(1)}
+    }
+    .v-safe{background:var(--safe);color:#000}
+    .v-suspicious{background:var(--susp);color:#000}
+    .v-dangerous{background:var(--danger);color:#fff}
+    .list{margin-top:12px;padding-left:20px}
+    .list li{
+      margin:6px 0;padding:6px 10px;border-radius:6px;
+      background:rgba(255,255,255,0.04);font-size:14px;
+      transition:background .3s ease;
+    }
+    .list li:hover{background:rgba(255,255,255,0.1)}
+    .scorebar{height:10px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;margin-top:8px}
+    .scorefill{height:100%;width:0%;background:linear-gradient(90deg,var(--safe),var(--susp));transition:width .5s ease}
+    footer{margin-top:14px;color:#8b949e;font-size:13px;text-align:center}
+    code.kbd{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:4px;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SafeLink Checker</h1>
+      <p class="lead">Check if a URL is Safe, Suspicious, or Dangerous</p>
+    </header>
+
+    <div class="card">
+      <label for="url">Enter URL to check</label>
+      <input id="url" type="text" placeholder="https://example.com" autocomplete="off" />
+
+      <div class="row">
+        <button id="checkBtn" class="primary">Check Now</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+
+      <div id="result" class="result" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <div id="verdictBadge" class="verdict">—</div>
+            <div style="margin-top:6px;font-size:13px">Normalized: <code class="kbd" id="norm">—</code></div>
+          </div>
+          <div style="min-width:220px">
+            <div style="font-size:13px">Risk Score</div>
+            <div class="scorebar"><div id="scoreFill" class="scorefill"></div></div>
+            <div id="scoreNum" style="margin-top:6px;font-size:13px">0 / 100</div>
+          </div>
+        </div>
+
+        <ul id="reasons" class="list"></ul>
+
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button id="copyBtn" class="secondary">Copy Result</button>
+          <button id="openBtn" class="secondary">Open in New Tab</button>
+        </div>
+      </div>
+
+      <footer>Note: This tool uses simple heuristics. For stronger protection, use VirusTotal or PhishTank.</footer>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // elements
+      const urlInput = document.getElementById('url');
+      const checkBtn = document.getElementById('checkBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const resultBox = document.getElementById('result');
+      const verdictBadge = document.getElementById('verdictBadge');
+      const normSpan = document.getElementById('norm');
+      const reasonsList = document.getElementById('reasons');
+      const scoreFill = document.getElementById('scoreFill');
+      const scoreNum = document.getElementById('scoreNum');
+      const copyBtn = document.getElementById('copyBtn');
+      const openBtn = document.getElementById('openBtn');
+
+      // small helper: if user enters domain without protocol, assume https
+      function normalizeUrl(raw){
+        raw = String(raw || '').trim();
+        if(!raw) return '';
+        if(!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) raw = 'https://' + raw;
+        try{ return new URL(raw).toString(); }catch{ return raw; }
+      }
+
+      // heuristics constants (kept same)
+      const SUSPICIOUS_TLDS = new Set(['zip','mov','lol','country','click','link','xyz','top','work','gq','ml','cf','tk','pw','men','bid','loan','win','party','cam']);
+      const SHORTENERS = new Set(['bit.ly','tinyurl.com','t.co','goo.gl','ow.ly','is.gd','buff.ly','cutt.ly','shorturl.at','adf.ly','rebrand.ly']);
+      const DANGEROUS_EXTS = new Set(['exe','scr','js','vbs','jar','apk','msi','bat','cmd','ps1','svg','zip','rar','7z','iso']);
+      const PHISHY_KEYWORDS = ['login','signin','verify','account','secure','update','confirm','recovery','pay','invoice','billing','support','unlock','gift','free','claim'];
+      const SENSITIVE_PARAMS = ['password','pass','token','session','auth','redirect','url','next','dest','q','query'];
+      const BRAND_WORDS = ['paypal','facebook','instagram','google','microsoft','apple','bank','amazon','netflix','steam','snapchat','tiktok','binance','metamask'];
+
+      function getHostname(u){ try{return new URL(u).hostname.toLowerCase()}catch{return ''} }
+      function getTld(host){ const p=host.split('.'); return p.length>1? p[p.length-1]:'' }
+      function looksLikeIp(h){ return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(h) }
+      function hasConfusableChars(h){ return /[^\u0000-\u007F]/.test(h) }
+      function countOcc(str,ch){ return [...String(str)].filter(c=>c===ch).length }
+      function hasMultipleDots(h){ return countOcc(h,'.')>=3 }
+      function hasAtSymbol(s){ return /@/.test(s) }
+      function containsAny(h,arr){ const H=String(h).toLowerCase(); return arr.some(w=>H.includes(w)) }
+      function extractExt(path){ const m=String(path).toLowerCase().match(/\.([a-z0-9]{1,6})(?:$|[?#])/); return m? m[1]:'' }
+      function hasSuspiciousParams(u){ try{ const url=new URL(u); for(const [k,v] of url.searchParams.entries()){ if(SENSITIVE_PARAMS.includes(k.toLowerCase())) return true; if(/https?:\/\//i.test(v)) return true } return false }catch{return false} }
+      function schemeRisk(u){ try{ const s=new URL(u).protocol.replace(':',''); return s!=='https'?10:0 }catch{return 20} }
+
+      function scoreUrl(input){
+        try{
+          const normalized = normalizeUrl(input);
+          const host = getHostname(normalized);
+          const pathname = (()=>{ try{return new URL(normalized).pathname}catch{return ''}})();
+          const length = String(normalized).length;
+          let score = 0; const reasons = [];
+
+          const sRisk = schemeRisk(normalized); if(sRisk>0){ score+=sRisk; reasons.push('Not HTTPS or invalid URL'); }
+          if(SHORTENERS.has(host)){ score+=20; reasons.push('URL shortener used'); }
+          if(SUSPICIOUS_TLDS.has(getTld(host))){ score+=12; reasons.push('Suspicious TLD'); }
+          if(looksLikeIp(host)){ score+=10; reasons.push('IP address instead of domain'); }
+          if(hasConfusableChars(host)){ score+=12; reasons.push('Non-ASCII characters detected'); }
+          if(hasMultipleDots(host)){ score+=8; reasons.push('Too many subdomains'); }
+          if(hasAtSymbol(normalized)){ score+=10; reasons.push('Contains @ symbol'); }
+          if(containsAny(pathname,PHISHY_KEYWORDS)){ score+=14; reasons.push('Phishing keyword detected'); }
+          if(containsAny(host+pathname,BRAND_WORDS)){ score+=8; reasons.push('Brand keyword detected'); }
+          if(hasSuspiciousParams(normalized)){ score+=12; reasons.push('Suspicious parameters or redirects'); }
+          const ext = extractExt(pathname); if(DANGEROUS_EXTS.has(ext)){ score+=18; reasons.push('Dangerous file extension: .' + ext); }
+          if(length>150){ score+=6; reasons.push('Unusually long URL'); }
+          if(length>300){ score+=8; reasons.push('Very long URL'); }
+          if(/\s|%0d|%0a|%09|\u0000/i.test(normalized)){ score+=8; reasons.push('Whitespace/control characters'); }
+          if(/^(javascript|data|file|blob):/i.test(normalized)){ score+=35; reasons.push('Dangerous protocol scheme'); }
+          if(/\blogin[.-]?\w*@/i.test(normalized)){ score+=10; reasons.push('Suspicious login pattern'); }
+
+          if(score<0) score=0; if(score>100) score=100;
+          const verdict = score>=60? 'dangerous' : score>=30? 'suspicious' : 'safe';
+          return { url: input, normalized, score, verdict, reasons };
+        }catch(err){
+          return { url: input, normalized: input, score: 100, verdict: 'dangerous', reasons: ['Error evaluating URL'] };
+        }
+      }
+
+      function render(res){
+        resultBox.style.display = 'block';
+        normSpan.textContent = res.normalized || res.url;
+        scoreNum.textContent = res.score + ' / 100';
+        scoreFill.style.width = Math.min(100, res.score) + '%';
+        // color the scorefill based on verdict
+        if(res.verdict==='safe') scoreFill.style.background = 'var(--safe)';
+        else if(res.verdict==='suspicious') scoreFill.style.background = 'var(--susp)';
+        else scoreFill.style.background = 'var(--danger)';
+
+        verdictBadge.textContent = res.verdict === 'safe'? 'Safe' : res.verdict==='suspicious'? 'Suspicious' : 'Dangerous';
+        verdictBadge.className = 'verdict ' + (res.verdict==='safe'? 'v-safe' : res.verdict==='suspicious' ? 'v-suspicious' : 'v-dangerous');
+
+        reasonsList.innerHTML = '';
+        if(!res.reasons || res.reasons.length===0){ const li = document.createElement('li'); li.textContent = 'No suspicious indicators.'; reasonsList.appendChild(li); }
+        else{ res.reasons.forEach(r=>{ const li = document.createElement('li'); li.textContent = r; reasonsList.appendChild(li); }); }
+
+        try{ const u = new URL(res.normalized); openBtn.disabled = false; openBtn.dataset.url = u.toString(); }catch{ openBtn.disabled = true; openBtn.dataset.url = ''; }
+      }
+
+      // events
+      checkBtn.addEventListener('click', ()=>{
+        const raw = urlInput.value.trim();
+        if(!raw){ alert('Please enter a URL to check'); urlInput.focus(); return; }
+        const res = scoreUrl(raw);
+        render(res);
+      });
+
+      clearBtn.addEventListener('click', ()=>{ urlInput.value = ''; resultBox.style.display = 'none'; urlInput.focus(); });
+
+      copyBtn.addEventListener('click', ()=>{
+        try{
+          const txt = JSON.stringify({ url: urlInput.value, result: { normalized: normSpan.textContent, score: scoreNum.textContent, verdict: verdictBadge.textContent } }, null, 2);
+          navigator.clipboard.writeText(txt).then(()=>{ alert('Result copied to clipboard'); }).catch(()=>{ alert('Copy failed'); });
+        }catch(e){ alert('Copy failed'); }
+      });
+
+      openBtn.addEventListener('click', ()=>{ const u = openBtn.dataset.url; if(!u) return; window.open(u, '_blank'); });
+
+      urlInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); checkBtn.click(); } });
+    });
+  </script>
+</body>
+</html>
